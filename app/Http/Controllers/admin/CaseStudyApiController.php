@@ -1,0 +1,172 @@
+<?php
+
+namespace App\Http\Controllers\admin;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\CaseStudy;
+use Throwable;
+use Illuminate\Support\Str;
+
+class CaseStudyApiController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+        $case_study = CaseStudy::orderBy('id', 'DESC')->get();
+        if (!$case_study->isEmpty()) {
+            return response()->json([
+                'status' => 200,
+                'message' => 'success',
+                'data' => $case_study
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 424,
+                'message' => 'Not found',
+            ],424);
+        }
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        // dd($request->all());
+        $request->validate([
+            'name' => 'required',
+            'image' => 'required|image'
+        ]);
+
+        $app_url = env('APP_URL');
+        if ($request->image) {
+
+            $fileName = time() . '.' . $request->image->getClientOriginalExtension();
+            $request->image->move(public_path('assets/img/case_study'), $fileName);
+            // $case_study->com_image = $fileName;
+            $file_path = $app_url . ":8000/assets/img/case_study/" . $fileName;
+        }
+
+        $slug = Str::slug($request->title, '-');
+        CaseStudy::create([
+            'com_name' => $request->name,
+            'com_image' => $file_path,
+            'slug' => $slug
+        ]);
+        return response()->json([
+            'name' => $request->name,
+            'image' => $fileName
+        ]);
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show($slug)
+    {
+        // dd($slug);
+        $case_study = CaseStudy::where('slug', $slug)->first();
+        if ($case_study) {
+            return response()->json([
+                'message' => 'success',
+                'status' => 200,
+                'data' => $case_study
+            ], 200);
+        } else {
+            return response()->json([
+                'message' => 'Not found',
+                'status' => 424,
+            ], 424);
+        }
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function edit($id)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, $id)
+    {
+        // dd($request);
+        // $request->validate([
+        //     'name' => 'required',
+        //     'image' => 'required|image'
+        // ]);
+
+
+        // dd($request->all());
+        // $request->validate([
+        //     'name' => 'required',
+        //     'image' => 'required|image'
+        // ]);
+
+        $case_study = CaseStudy::find($id);
+        $app_url = env('APP_URL');
+        $case_study->com_name = $request->name;
+        $case_study->slug = $request->slug;
+
+        if ($request->image) {
+
+            $fileName = time() . '.' . $request->image->getClientOriginalExtension();
+            $request->image->move(public_path('assets/img/case_study'), $fileName);
+            $file_path = $app_url . ":8000/assets/img/case_study/" . $fileName;
+            $case_study->com_image = $file_path;
+        }
+
+
+        $update = $case_study->save();
+
+        if ($update) {
+            return response()->json(['success' => 'You have successfully update Case Study.']);
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($id)
+    {
+        $case_study = CaseStudy::find($id);
+        $case_study->delete();
+        return response()->json([
+            'success' => "true",
+            'message' => "deleted successfully"
+        ]);
+    }
+}

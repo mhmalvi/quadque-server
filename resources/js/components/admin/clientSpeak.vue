@@ -1,0 +1,464 @@
+<template>
+  <div>
+    <lottie-vue-player
+      v-if="loader"
+      :src="`./9582-liquid-4-dot-loader.json`"
+      style="top: 40%; position: sticky; background: transparent; z-index: 100"
+    >
+    </lottie-vue-player>
+    <div class="row d-flex justify-content-center">
+      <div
+        v-if="this.is_editing == true"
+        @click="disable_button()"
+        class="mt-3"
+      >
+        <button class="btn btn-primary">Add speak of clients</button>
+      </div>
+      <div class="col-md-12 mt-4">
+        <!-- <div class="alert alert-success" v-if="this.success">
+          {{ this.success }}
+        </div> -->
+        <div class="card">
+          <div
+            class="card-header text-center"
+            style="
+              height: 47px;
+              background-image: linear-gradient(
+                to right,
+                rgb(242, 112, 156),
+                rgb(255, 148, 114)
+              );
+            "
+          >
+            <h4
+              class="card-title text-white text-center"
+              style="margin:auto;"
+            >
+              {{
+                this.is_editing ? "Update Client Speak" : "Create Client Speak"
+              }}
+            </h4>
+          </div>
+          <div class="card-body">
+            <form>
+              <div class="form-group">
+                <label for="title">Client Name</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  v-model="name"
+                  placeholder="Enter client name"
+                  required
+                />
+                <div class="text-danger" v-if="this.nameError">
+                  {{ this.nameError }}
+                </div>
+              </div>
+              <!-- <div class="form-group" v-if="this.is_editing">
+                <label for="title">slug</label>
+                <input
+                  type="string"
+                  class="form-control"
+                  v-model="slug"
+                  placeholder="Enter slug"
+                  required
+                />
+              </div> -->
+              <!-- {{ designation }} -->
+              <div class="form-group">
+                <label for="title">Client Designation</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  v-model="designation"
+                  placeholder="Enter designation"
+                  required
+                />
+                <div class="text-danger" v-if="this.designationError">
+                  {{ this.designationError }}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="thumbnail">Client Image</label>
+                <input
+                  type="file"
+                  class="form-control"
+                  id="thumbnail"
+                  @change="uploadfile"
+                  required
+                />
+                <div class="text-danger" v-if="this.fileError">
+                  {{ this.fileError }}
+                </div>
+                <p class="my-2 text-center" v-if="this.temp_thumbnail_url">
+                  <img
+                    :src="$base+this.temp_thumbnail_url"
+                    width="150"
+                    height="150"
+                  />
+                </p>
+              </div>
+              <!-- {{ description }} -->
+              <div class="form-group">
+                <label for="title">Client Opinion</label><br />
+                <textarea
+                  v-model="description"
+                  class="form-control "
+                  rows="4"
+                  required
+                ></textarea>
+                <div class="text-danger" v-if="this.descriptionError">
+                  {{ this.descriptionError }}
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="company_name">Meta Keyword</label>
+                <textarea
+                  type="text"
+                  class="form-control"
+                  id="description"
+                  v-model="meta_keyword"
+                ></textarea>
+                <!-- <div class="text-danger" v-if="this.nameError">
+                  {{ this.nameError }}
+                </div> -->
+              </div>
+              <div>
+                <button
+                  type="button"
+                  class="btn btn-block btn-save text-white"
+                  @click="save"
+                >
+                  {{ this.is_editing ? "Update" : "Save" }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row mt-5 d-flex justify-content-center">
+      <div class="col-md-12">
+        <h4>Client Opinion Lists</h4>
+        <table class="table table-striped text-center">
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>Name</th>
+              <th>Designation</th>
+              <!-- <th style="width: 36%">Description</th> -->
+              <th>Thumbnail</th>
+
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody v-if="lists.length > 0">
+            <tr v-for="(list, index) in lists" :key="index">
+              <td style="vertical-align: middle; font-weight: 500">
+                {{ index + 1 }}.
+              </td>
+              <td style="vertical-align: middle; font-weight: 500">
+                {{ list.name }}
+              </td>
+              <td style="vertical-align: middle; font-weight: 500">
+                {{ list.designation }}
+              </td>
+
+              <!-- <td style="vertical-align: middle" v-html="list.description"> -->
+                <!-- {{  }} -->
+              <!-- </td> -->
+
+              <td style="vertical-align: middle">
+                <img :src="$base+list.image" width="100" height="100" />
+              </td>
+
+              <td style="vertical-align: middle; width: 15%; color: white">
+                <button
+                  type="button"
+                  class="btn btn-primary text-white"
+                  @click="editList(list.id),greet()"
+                >
+                  Edit</button
+                ><button
+                  type="button"
+                  class="btn btn-danger ml-1"
+                  @click="destroyList(list.id)"
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          </tbody>
+          <tbody v-else>
+            <tr>
+              <td colspan="6">
+                <h3 class="text-center">There have no client speaks...!</h3>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</template>
+<script>
+import axios from "axios";
+export default {
+  // name:"service-component",
+  data() {
+    return {
+      loader:false,
+      lists: [],
+      name: "",
+      image: "",
+      description: "",
+      designation: "",
+      nameError: "",
+      descriptionError: "",
+      designationError: "",
+      fileError: "",
+      success: "",
+      temporary_id: "",
+      is_editing: false,
+      temp_thumbnail_url: "",
+      meta_keyword:""
+      // blog_no: 1,
+    };
+  },
+  // computed: {
+  //       slug(){
+  //           return this.name.replace(/\s+/g, '-').toLowerCase();
+  //       }
+  //   },
+  methods: {
+    disable_button() {
+      this.is_editing = false;
+      this.name = "";
+      this.designation = "";
+      this.description = "";
+      this.file = "";
+      // this.slug=""
+      this.temp_thumbnail_url = "";
+      this.meta_keyword=""
+    },
+    fetchAll() {
+      this.loader=true
+      axios
+        .get("/admin/client-speak/get")
+        .then((response) => {
+          this.loader=false
+          this.lists = response.data.data;
+        })
+        .catch((error) => {});
+    },
+    uploadfile(e) {
+      this.image = e.target.files[0];
+      this.temp_thumbnail_url = "";
+    },
+
+    greet() {
+            window.scrollTo(0, 0);
+        },
+
+    save() {
+      this.loader=true
+      let url;
+      if (this.is_editing) {
+        url = `/admin/client-speak/update`;
+      } else {
+        url = `/admin/client-speak/store`;
+      }
+
+      let fd = new FormData();
+      fd.append("name", this.name);
+      fd.append("designation", this.designation);
+      fd.append("description", this.description);
+      fd.append("image", this.image);
+      fd.append("id", this.temporary_id);
+      fd.append("meta_keyword", this.meta_keyword);
+      axios
+        .post(url, fd)
+        .then((response) => {
+          this.image = "";
+            this.nameError=""
+            this.descriptionError=""
+            this.designationError= "",
+            this.fileError=""
+          this.loader=false
+          this.success = response.data.success;
+          this.fetchAll();
+          if (this.success == "created") {
+            this.$swal.fire({
+              // position: "top-end",
+              icon: "success",
+              title: "Client Speak Saved",
+              showConfirmButton: true,
+              // timer: 1500,
+            });
+            this.is_editing = false;
+            this.name = "";
+            this.description = "";
+            this.designation = "";
+            document.getElementById("image").value = "";
+            this.temporary_id = "";
+            this.temp_thumbnail_url = "";
+            
+          } else if (this.success == "updated") {
+            this.$swal.fire({
+              // position: "top-end",
+              icon: "success",
+              title: "Client Speak Updated",
+              showConfirmButton: true,
+              // timer: 1500,
+            });
+            this.is_editing = true;
+          }
+
+          // console.log(this.success)
+
+          setTimeout(function () {
+            this.success = "";
+          }, 5000);
+        })
+        .catch((error) => {
+          this.loader=false
+          
+          console.log(error.response);
+          if (error.response.data.errors.name) {
+            this.$swal.fire({
+              // position: "top-end",
+              // icon: "success",
+              title: error.response.data.errors.name,
+              showConfirmButton: true,
+              // timer: 1500,
+            });
+            console.log("here");
+            console.log(error.response.data.errors.name);
+            this.nameError = error.response.data.errors.name[0];
+          } else {
+            this.nameError = "";
+          }
+
+          if (error.response.data.errors.description) {
+            this.$swal.fire({
+              // position: "top-end",
+              // icon: "success",
+              title: error.response.data.errors.description,
+              showConfirmButton: true,
+              // timer: 1500,
+            });
+            this.descriptionError = error.response.data.errors.description[0];
+          } else {
+            this.descriptionError = "";
+          }
+
+          if (error.response.data.errors.designation) {
+            this.$swal.fire({
+              // position: "top-end",
+              // icon: "success",
+              title: error.response.data.errors.designation,
+              showConfirmButton: true,
+              // timer: 1500,
+            });
+            this.designationError = error.response.data.errors.designation[0];
+          } else {
+            this.designationError = "";
+          }
+          if (error.response.data.errors.image) {
+            this.$swal.fire({
+              // position: "top-end",
+              // icon: "success",
+              title: error.response.data.errors.image,
+              showConfirmButton: true,
+              // timer: 1500,
+            });
+            this.fileError = error.response.data.errors.image[0];
+          } else {
+            this.fileError = "";
+          }
+        });
+    },
+
+    editList(list_id) {
+      this.loader=true
+      this.is_editing = true;
+      this.nameError = "";
+      this.fileError = "";
+      this.temporary_id = list_id;
+      axios
+        .get(`/admin/client-speak/edit/${this.temporary_id}`)
+        .then((response) => {
+          this.loader=false
+          this.name = response.data.name;
+          this.designation = response.data.designation;
+          this.description = response.data.description;
+          this.temp_thumbnail_url = response.data.image;
+          this.meta_keyword = response.data.meta_keyword;
+        })
+        .catch((error) => {});
+    },
+    destroyList(list_id) {
+      this.loader=true
+      axios.get(`/admin/client-speak/delete/${list_id}`).then((response) => {
+        this.loader=false
+        this.fetchAll();
+        this.is_editing = false;
+        this.name = "";
+        this.designation = "";
+        this.description = "";
+        this.file = "";
+        // this.slug=""
+        this.temp_thumbnail_url = "";
+      this.meta_keyword=""
+        this.$swal.fire({
+          icon: "error",
+          text: "Deleted",
+        });
+      });
+    },
+  },
+  mounted() {
+    this.fetchAll();
+  },
+};
+</script>
+<style scoped>
+div {
+  letter-spacing: 1px;
+  font-family: sans-serif;
+}
+.btn-edit {
+  background: #0093e9;
+}
+.card-header {
+  background-image: linear-gradient(
+    to right,
+    rgb(242, 112, 156),
+    rgb(255, 148, 114)
+  );
+}
+thead {
+  /* background: #84a4ff; */
+  background-image: linear-gradient(to right, #0093e9, #80d0c7);
+  color: white;
+  border: none;
+}
+.card {
+  border-top: none;
+}
+.card-header {
+  border: none;
+}
+.btn-save {
+  background: #5a67ff;
+}
+.btn-save:hover {
+  background: #0093e9;
+  transition: 2s ease;
+}
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+  --bs-table-accent-bg: rgb(229 231 255);
+  color: var(--bs-table-striped-color);
+  border: none;
+}
+</style>

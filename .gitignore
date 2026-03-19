@@ -16,3 +16,8 @@ yarn-error.log
 package.lock.json
 /.idea
 /.vscode
+# Security
+.env.*
+credentials.json
+serviceAccountKey.json
+.claude/

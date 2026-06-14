@@ -1,6 +1,8 @@
 <!-- repo-card -->
 ![quadque-server](docs/assets/social-card.png)
 
+![quadque-server — architecture](docs/assets/architecture.png)
+
 # Quadque Server
 
 The rewritten backend server for the **Quadque Technologies** digital platform. Built on Laravel 8 with a Vue.js frontend layer, this application serves as the primary API and web backend powering the Quadque ecosystem, handling authentication, content management, media processing, and client-facing services.
